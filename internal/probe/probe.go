@@ -225,7 +225,7 @@ func (r *Runner) getObject(parent context.Context, key string, wantSHA []byte) o
 	})
 	statusCode := statusCodeFromResponseOrError(r.statuses.Last(), err)
 	if err != nil {
-		return makeResult(opGetObject, started, statusCode, err, nil, http.StatusOK)
+		return makeResult(opGetObject, started, statusCode, err, 0, http.StatusOK)
 	}
 	defer out.Body.Close()
 
