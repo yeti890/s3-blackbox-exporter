@@ -1,0 +1,137 @@
+groups:
+  - name: s3-blackbox-exporter
+    interval: 30s
+    rules:
+      - alert: S3ProbeCycleFailed
+        expr: min_over_time(s3_probe_cycle_success[3m]) == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: s3
+        annotations:
+          summary: "S3 probe full cycle failed"
+          description: "Full S3 probe cycle failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}. Check per-operation metrics for root cause."
+
+      - alert: S3ProbeCycleHighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le, cluster, az, endpoint, bucket) (
+              rate(s3_probe_cycle_duration_seconds_bucket[5m])
+            )
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: s3
+        annotations:
+          summary: "S3 probe full cycle p95 latency is high"
+          description: "Full S3 probe cycle p95 latency is above 3s for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbeHeadBucketFailed
+        expr: min_over_time(s3_probe_success{operation="head_bucket"}[3m]) == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: s3
+        annotations:
+          summary: "S3 probe HEAD bucket failed"
+          description: "HEAD bucket failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbePutFailed
+        expr: min_over_time(s3_probe_success{operation="put_object"}[3m]) == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: s3
+        annotations:
+          summary: "S3 probe PUT failed"
+          description: "PUT object failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbeHeadObjectFailed
+        expr: |
+          min_over_time(s3_probe_success{operation="head_object"}[3m]) == 0
+          and on(cluster, az, endpoint, bucket, operation)
+          max without (type) (max_over_time(s3_probe_error{operation="head_object",type!="skipped"}[3m])) == 1
+        for: 1m
+        labels:
+          severity: error
+          service: s3
+        annotations:
+          summary: "S3 probe HEAD object failed"
+          description: "HEAD object failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbeListFailed
+        expr: |
+          min_over_time(s3_probe_success{operation="list_bucket"}[5m]) == 0
+          and on(cluster, az, endpoint, bucket, operation)
+          max without (type) (max_over_time(s3_probe_error{operation="list_bucket",type!="skipped"}[5m])) == 1
+        for: 2m
+        labels:
+          severity: error
+          service: s3
+        annotations:
+          summary: "S3 probe LIST exact key failed"
+          description: "LIST exact object key failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbeGetFailed
+        expr: |
+          min_over_time(s3_probe_success{operation="get_object"}[3m]) == 0
+          and on(cluster, az, endpoint, bucket, operation)
+          max without (type) (max_over_time(s3_probe_error{operation="get_object",type!="skipped"}[3m])) == 1
+        for: 1m
+        labels:
+          severity: critical
+          service: s3
+        annotations:
+          summary: "S3 probe GET failed"
+          description: "GET object or checksum verification failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbeDeleteFailed
+        expr: |
+          min_over_time(s3_probe_success{operation="delete_object"}[3m]) == 0
+          and on(cluster, az, endpoint, bucket, operation)
+          max without (type) (max_over_time(s3_probe_error{operation="delete_object",type!="skipped"}[3m])) == 1
+        for: 1m
+        labels:
+          severity: error
+          service: s3
+        annotations:
+          summary: "S3 probe DELETE failed"
+          description: "DELETE object failed for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."
+
+      - alert: S3ProbeTimeouts
+        expr: increase(s3_probe_error_total{type="timeout"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: error
+          service: s3
+        annotations:
+          summary: "S3 probe timeout detected"
+          description: "Timeouts detected for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }} operation {{ $labels.operation }}."
+
+      - alert: S3ProbeHTTP5xx
+        expr: increase(s3_probe_http_status_total{class="5xx"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: error
+          service: s3
+        annotations:
+          summary: "S3 probe HTTP 5xx detected"
+          description: "HTTP 5xx detected for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }} operation {{ $labels.operation }}."
+
+      - alert: S3ProbeHighPutLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le, cluster, az, endpoint, bucket) (
+              rate(s3_probe_duration_seconds_bucket{operation="put_object"}[5m])
+            )
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: s3
+        annotations:
+          summary: "S3 probe PUT p95 latency is high"
+          description: "PUT p95 latency is above 1s for {{ $labels.cluster }}/{{ $labels.az }} endpoint {{ $labels.endpoint }} bucket {{ $labels.bucket }}."

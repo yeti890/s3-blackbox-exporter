@@ -1,0 +1,23 @@
+services:
+  s3-blackbox-exporter:
+    image: yeti89/s3-blackbox-exporter:latest
+    container_name: s3-blackbox-exporter
+    restart: unless-stopped
+    ports:
+      - "9241:9241"
+    environment:
+      ENDPOINT: "https://s3.example.ru"
+      ACCESS_KEY: "change-me-access-key"
+      SECRET_KEY: "change-me-secret-key"
+      BUCKET: "s3-healthcheck"
+      REGION: "us-east-1"
+      CLUSTER_NAME: "PRS1"
+      AZ: "az1"
+      BASE_PREFIX: "s3-blackbox-exporter"
+      INTERVAL: "30s"
+      TIMEOUT: "10s"
+      OBJECT_SIZE_BYTES: "1048576"
+      LISTEN_ADDRESS: ":9241"
+      PATH_STYLE: "true"
+      INSECURE_SKIP_VERIFY: "false"
+      RETRY_MODE: "nop"
