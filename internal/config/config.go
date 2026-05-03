@@ -12,49 +12,53 @@ import (
 const maxObjectSizeBytes = 512 * 1024 * 1024
 
 type Config struct {
-	Endpoint            string
-	AccessKey           string
-	SecretKey           string
-	Bucket              string
-	Region              string
-	BasePrefix          string
-	ListenAddress       string
-	Interval            time.Duration
-	Timeout             time.Duration
-	ObjectSizeBytes     int64
-	InsecureSkipVerify  bool
-	DisableSSL          bool
-	PathStyle           bool
-	ClusterName         string
-	AvailabilityZone    string
-	RetryMode           string
-	RetryMaxAttempts    int
-	RetryMaxBackoff     time.Duration
-	DisableInitialProbe bool
-	TLSClientConfig     *tls.Config
+	Endpoint                   string
+	AccessKey                  string
+	SecretKey                  string
+	Bucket                     string
+	Region                     string
+	BasePrefix                 string
+	ListenAddress              string
+	Interval                   time.Duration
+	Timeout                    time.Duration
+	ObjectSizeBytes            int64
+	InsecureSkipVerify         bool
+	DisableSSL                 bool
+	PathStyle                  bool
+	ClusterName                string
+	AvailabilityZone           string
+	RetryMode                  string
+	RetryMaxAttempts           int
+	RetryMaxBackoff            time.Duration
+	RequestChecksumCalculation string
+	ResponseChecksumValidation string
+	DisableInitialProbe        bool
+	TLSClientConfig            *tls.Config
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		Endpoint:            normalizeEndpoint(getenv("ENDPOINT", ""), getBool("DISABLE_SSL", false)),
-		AccessKey:           getenv("ACCESS_KEY", ""),
-		SecretKey:           firstNonEmpty(os.Getenv("SECRET_KEY"), os.Getenv("SERCRET_KEY")),
-		Bucket:              getenv("BUCKET", ""),
-		Region:              getenv("REGION", "us-east-1"),
-		BasePrefix:          strings.Trim(firstNonEmpty(os.Getenv("BASE_PREFIX"), os.Getenv("PREFIX"), "s3-blackbox-exporter"), "/"),
-		ListenAddress:       getenv("LISTEN_ADDRESS", ":9241"),
-		Interval:            getDuration("INTERVAL", 30*time.Second),
-		Timeout:             getDuration("TIMEOUT", 10*time.Second),
-		ObjectSizeBytes:     getInt64("OBJECT_SIZE_BYTES", 1024*1024),
-		InsecureSkipVerify:  getBool("INSECURE_SKIP_VERIFY", false),
-		DisableSSL:          getBool("DISABLE_SSL", false),
-		PathStyle:           getBool("PATH_STYLE", true),
-		ClusterName:         getenv("CLUSTER_NAME", "default"),
-		AvailabilityZone:    getenv("AZ", "unknown"),
-		RetryMode:           strings.ToLower(getenv("RETRY_MODE", "nop")),
-		RetryMaxAttempts:    getInt("RETRY_MAX_ATTEMPTS", 1),
-		RetryMaxBackoff:     getDuration("RETRY_MAX_BACKOFF", 2*time.Second),
-		DisableInitialProbe: getBool("DISABLE_INITIAL_PROBE", false),
+		Endpoint:                   normalizeEndpoint(getenv("ENDPOINT", ""), getBool("DISABLE_SSL", false)),
+		AccessKey:                  getenv("ACCESS_KEY", ""),
+		SecretKey:                  firstNonEmpty(os.Getenv("SECRET_KEY"), os.Getenv("SERCRET_KEY")),
+		Bucket:                     getenv("BUCKET", ""),
+		Region:                     getenv("REGION", "us-east-1"),
+		BasePrefix:                 strings.Trim(firstNonEmpty(os.Getenv("BASE_PREFIX"), os.Getenv("PREFIX"), "s3-blackbox-exporter"), "/"),
+		ListenAddress:              getenv("LISTEN_ADDRESS", ":9241"),
+		Interval:                   getDuration("INTERVAL", 30*time.Second),
+		Timeout:                    getDuration("TIMEOUT", 10*time.Second),
+		ObjectSizeBytes:            getInt64("OBJECT_SIZE_BYTES", 1024*1024),
+		InsecureSkipVerify:         getBool("INSECURE_SKIP_VERIFY", false),
+		DisableSSL:                 getBool("DISABLE_SSL", false),
+		PathStyle:                  getBool("PATH_STYLE", true),
+		ClusterName:                getenv("CLUSTER_NAME", "default"),
+		AvailabilityZone:           getenv("AZ", "unknown"),
+		RetryMode:                  strings.ToLower(getenv("RETRY_MODE", "nop")),
+		RetryMaxAttempts:           getInt("RETRY_MAX_ATTEMPTS", 1),
+		RetryMaxBackoff:            getDuration("RETRY_MAX_BACKOFF", 2*time.Second),
+		RequestChecksumCalculation: strings.ToLower(getenv("AWS_REQUEST_CHECKSUM_CALCULATION", "when_required")),
+		ResponseChecksumValidation: strings.ToLower(getenv("AWS_RESPONSE_CHECKSUM_VALIDATION", "when_required")),
+		DisableInitialProbe:        getBool("DISABLE_INITIAL_PROBE", false),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -107,6 +111,12 @@ func (c Config) Validate() error {
 	}
 	if c.RetryMaxBackoff <= 0 {
 		return fmt.Errorf("RETRY_MAX_BACKOFF must be > 0")
+	}
+	if c.RequestChecksumCalculation != "when_required" && c.RequestChecksumCalculation != "when_supported" {
+		return fmt.Errorf("AWS_REQUEST_CHECKSUM_CALCULATION must be one of: when_required, when_supported")
+	}
+	if c.ResponseChecksumValidation != "when_required" && c.ResponseChecksumValidation != "when_supported" {
+		return fmt.Errorf("AWS_RESPONSE_CHECKSUM_VALIDATION must be one of: when_required, when_supported")
 	}
 	return nil
 }

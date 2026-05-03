@@ -20,4 +20,6 @@ podman run -d \
   -e PATH_STYLE="true" \
   -e INSECURE_SKIP_VERIFY="false" \
   -e RETRY_MODE="nop" \
+  -e AWS_REQUEST_CHECKSUM_CALCULATION="when_required" \
+  -e AWS_RESPONSE_CHECKSUM_VALIDATION="when_required" \
   docker.io/yeti89/s3-blackbox-exporter:latest

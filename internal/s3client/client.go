@@ -41,6 +41,8 @@ func New(ctx context.Context, cfg config.Config) (*s3.Client, *StatusRecorder, e
 		return nil, nil, err
 	}
 
+	applyChecksumSettings(&awsCfg, cfg)
+
 	client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(cfg.Endpoint)
 		o.UsePathStyle = cfg.PathStyle
@@ -51,6 +53,22 @@ func New(ctx context.Context, cfg config.Config) (*s3.Client, *StatusRecorder, e
 	})
 
 	return client, recorder, nil
+}
+
+func applyChecksumSettings(awsCfg *aws.Config, cfg config.Config) {
+	switch cfg.RequestChecksumCalculation {
+	case "when_supported":
+		awsCfg.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenSupported
+	default:
+		awsCfg.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+	}
+
+	switch cfg.ResponseChecksumValidation {
+	case "when_supported":
+		awsCfg.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenSupported
+	default:
+		awsCfg.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
+	}
 }
 
 func retryer(cfg config.Config) func() aws.Retryer {

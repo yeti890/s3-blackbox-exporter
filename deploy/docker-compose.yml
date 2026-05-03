@@ -21,3 +21,5 @@ services:
       PATH_STYLE: "true"
       INSECURE_SKIP_VERIFY: "false"
       RETRY_MODE: "nop"
+      AWS_REQUEST_CHECKSUM_CALCULATION: "when_required"
+      AWS_RESPONSE_CHECKSUM_VALIDATION: "when_required"

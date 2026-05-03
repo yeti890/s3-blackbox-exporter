@@ -110,6 +110,8 @@ Error types:
 | `RETRY_MODE` | `nop` | `nop` or `standard`; `nop` is recommended for raw blackbox monitoring |
 | `RETRY_MAX_ATTEMPTS` | `1` | Used when `RETRY_MODE=standard` |
 | `RETRY_MAX_BACKOFF` | `2s` | Used when `RETRY_MODE=standard` |
+| `AWS_REQUEST_CHECKSUM_CALCULATION` | `when_required` | `when_required` or `when_supported`; keep `when_required` for Ceph RGW/S3-compatible endpoints |
+| `AWS_RESPONSE_CHECKSUM_VALIDATION` | `when_required` | `when_required` or `when_supported`; keep `when_required` for Ceph RGW/S3-compatible endpoints |
 | `DISABLE_INITIAL_PROBE` | `false` | Do not run probe immediately on startup |
 
 Maximum `OBJECT_SIZE_BYTES` is `536870912` bytes.
@@ -119,9 +121,11 @@ For blackbox monitoring, keep:
 ```bash
 RETRY_MODE="nop"
 RETRY_MAX_ATTEMPTS="1"
+AWS_REQUEST_CHECKSUM_CALCULATION="when_required"
+AWS_RESPONSE_CHECKSUM_VALIDATION="when_required"
 ```
 
-This prevents SDK retries from hiding first-attempt 5xx/timeouts.
+This prevents SDK retries from hiding first-attempt 5xx/timeouts and prevents AWS SDK S3 checksum behavior from forcing CRC32-style checksums that some Ceph RGW/S3-compatible endpoints do not support.
 
 ## Run as binary
 
@@ -139,6 +143,8 @@ export TIMEOUT="10s"
 export OBJECT_SIZE_BYTES="1048576"
 export PATH_STYLE="true"
 export RETRY_MODE="nop"
+export AWS_REQUEST_CHECKSUM_CALCULATION="when_required"
+export AWS_RESPONSE_CHECKSUM_VALIDATION="when_required"
 
 ./s3-blackbox-exporter
 ```
@@ -169,6 +175,8 @@ docker run -d \
   -e OBJECT_SIZE_BYTES="1048576" \
   -e PATH_STYLE="true" \
   -e RETRY_MODE="nop" \
+  -e AWS_REQUEST_CHECKSUM_CALCULATION="when_required" \
+  -e AWS_RESPONSE_CHECKSUM_VALIDATION="when_required" \
   yeti89/s3-blackbox-exporter:latest
 ```
 

@@ -79,6 +79,8 @@ func main() {
 			"base_prefix", cfg.BasePrefix,
 			"retry_mode", cfg.RetryMode,
 			"retry_max_attempts", cfg.RetryMaxAttempts,
+			"request_checksum_calculation", cfg.RequestChecksumCalculation,
+			"response_checksum_validation", cfg.ResponseChecksumValidation,
 			"interval", cfg.Interval.String(),
 			"timeout", cfg.Timeout.String(),
 			"object_size_bytes", cfg.ObjectSizeBytes,
